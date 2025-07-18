@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Q3 Olympic Efficiency with Bar Chart</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/modern-normalize@2/modern-normalize.css">
+  <style>
+    :root {
+      --bg: #f5f7fa; --fg: #333;
+      --card-bg: #fff; --border: #ddd;
+      --font: "Segoe UI", system-ui, sans-serif;
+      --radius: 6px; --shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    body {
+      margin: 0; background: var(--bg);
+      color: var(--fg); font-family: var(--font);
+    }
+
+    /* ── Navbar ─────────────────────────────────────────── */
+    nav {
+      background: #2c3e50;
+      padding: 0.75em;
+      text-align: center;
+    }
+    nav a {
+      color: #ecf0f1;
+      margin: 0 1em;
+      font-weight: 500;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    nav a:hover {
+      color: #2ca02c;
+    }
+
+    h1 { text-align: center; margin: 1em 0 .5em; font-size: 1.5rem; }
+
+    .static-legend {
+      max-width: 960px; margin: 0 auto 1em;
+      background: var(--card-bg); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: .75em 1em;
+      display: flex; gap: 1.5em; font-size: .9rem; justify-content: center;
+    }
+    .static-legend div { display: flex; align-items: center; }
+    .static-legend span.color-box {
+      width: 16px; height: 16px; margin-right: .5em; border:1px solid #999;
+    }
+
+    .chart-area {
+      display: flex; max-width: 100%; margin: 0 auto 2em;
+      align-items: flex-start;
+    }
+    #bar-container {
+      flex: 0 0 350px; margin-right: 1em;
+    }
+    #bar { width:100%; height:500px; }
+
+    #map-container {
+      flex: 1; position: relative;
+    }
+    #map { width:100%; height:500px; }
+
+    .map-caption {
+      text-align: center; font-size: .85rem; color:#666;
+      margin-top:.5em;
+    }
+
+    #controls {
+      flex: 0 0 260px; margin-left:1em;
+      background:var(--card-bg); border:1px solid var(--border);
+      border-radius:var(--radius); box-shadow:var(--shadow);
+      padding:1em;
+    }
+    label, select, #year-label { display:block; margin-bottom:.75em; font-size:.9rem; }
+    #year-slider { width:100%; margin-bottom:1em; }
+    #country-list {
+      max-height:150px; overflow-y:auto;
+      border:1px solid var(--border); padding:.5em; margin-bottom:.75em;
+    }
+    #country-list label { display:block; margin:.25em 0; font-size:.85rem; }
+    button { margin:.25em 0; padding:.3em .6em; width:100%; font-size:.9rem; }
+
+    .map-controls {
+      position:absolute; pointer-events:all;
+      background:rgba(255,255,255,0.85); padding:.5em;
+      border-radius:4px; display:flex; gap:.5em; align-items:center;
+    }
+    .map-controls button, .map-controls select {
+      padding:.2em .5em; font-size:.8rem; cursor:pointer;
+    }
+    #map-container.fullscreen {
+      position:fixed; top:0; left:0; right:0; bottom:0;
+      background:var(--bg); z-index:9999;
+      display:flex; align-items:center; justify-content:center;
+    }
+    #map-container.fullscreen svg {
+      height:calc(100% - 80px) !important;
+    }
+    #map-container.fullscreen + #controls { display:none; }
+
+    .tooltip {
+      position:absolute; pointer-events:none;
+      background:var(--card-bg); border:1px solid var(--border);
+      border-radius:var(--radius); padding:8px 12px;
+      font-size:.85rem; box-shadow:var(--shadow);
+      opacity:0; transition:opacity .1s; white-space:nowrap;
+    }
+
+    .grid line {
+      stroke:#ddd; stroke-opacity:0.8; shape-rendering:crispEdges;
+    }
+    .grid path { stroke-width:0; }
+    .bar { fill:#555; }
+    .bar:hover { fill:#333; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html">Q1 Trends</a>|
+    <a href="q2.html">Q2 Over/Under</a>|
+    <a href="q3.html">Q3 Olympic Efficiency</a>
+  </nav>
+
+  <h1>Q3 Where Do Olympic Medals Come From?</h1>
+
+  <div class="static-legend">
+    <div><span class="color-box" style="background:#cceeff;"></span>Sea</div>
+    <div><span class="color-box" style="background:#ffd6d6;"></span>No medals / no data</div>
+    <div><span class="color-box" style="background:#555;"></span>High medals</div>
+    <div><span class="color-box" style="background:#eee;"></span>Low medals</div>
+  </div>
+
+  <div class="chart-area">
+    <div id="bar-container" class="chart-container">
+      <svg id="bar"></svg>
+    </div>
+    <div id="map-container" class="chart-container">
+      <svg id="map"></svg>
+      <div class="map-caption">
+        * Pale-red countries have no medals or lack data for the selected metric
+      </div>
+      <div class="map-controls">
+        <button id="step-back">⏮️</button>
+        <button id="play-btn">▶️ Play</button>
+        <button id="step-forward">⏭️</button>
+        <label for="speed-select">Speed</label>
+        <select id="speed-select">
+          <option value="2000">Slow</option>
+          <option value="1000" selected>Normal</option>
+          <option value="500">Fast</option>
+        </select>
+        <button id="fs-btn">⛶</button>
+      </div>
+      <div class="map-controls" style="top:1em; bottom:auto; left:50%; transform:translateX(-50%);">
+        <span id="year-label"></span><br>
+        <input id="year-slider" type="range">
+      </div>
+    </div>
+    <div id="controls">
+      <label for="metric-select">Select Metric</label>
+      <select id="metric-select">
+        <option value="Total" selected>Total Medals</option>
+        <option value="MedalsPerCapita">Medals per Capita</option>
+        <option value="MedalsPerGDP">Medals per GDP</option>
+      </select>
+      <label>Show only these countries:</label>
+      <button id="select-all">Select All</button>
+      <button id="clear-all">Deselect All</button>
+      <div id="country-list"></div>
+    </div>
+  </div>
+
+  <div id="map-tooltip" class="tooltip"></div>
+
+  <script>
+  const mapW=960, mapH=500,
+        barW=350, barH=500,
+        margin={top:30,right:20,bottom:60,left:80};
+
+  // Bar chart setup
+  const svgBar = d3.select("#bar")
+                    .attr("viewBox",`0 0 ${barW} ${barH}`);
+  const gBar   = svgBar.append("g")
+                       .attr("transform",`translate(${margin.left},${margin.top})`);
+  const innerW = barW - margin.left - margin.right;
+  const innerH = barH - margin.top  - margin.bottom;
+  const xBar   = d3.scaleLinear().range([0,innerW]);
+  const yBar   = d3.scaleBand().range([0,innerH]).padding(0.4);
+  const xAxisG = gBar.append("g")
+                    .attr("transform",`translate(0,${innerH})`);
+  const yAxisG = gBar.append("g");
+
+  // Map setup
+  const svgMap = d3.select("#map")
+                   .attr("viewBox",`0 0 ${mapW} ${mapH}`);
+  const gMap    = svgMap.append("g");
+  gMap.append("rect")
+      .attr("width",mapW)
+      .attr("height",mapH)
+      .attr("fill","#cceeff");
+  const projection = d3.geoNaturalEarth1()
+                       .scale(155)
+                       .translate([mapW/2,mapH/2]);
+  const path = d3.geoPath(projection);
+  const tooltip = d3.select("#map-tooltip");
+
+  // State
+  let metric="Total", year, years, dataByYear;
+  let intervalDuration=1000, playInterval, playing=false;
+  const fmtSci = d3.format(".2e");
+
+  Promise.all([
+    d3.json("data/world.geojson"),
+    d3.json("data/medals_by_country_year.json")
+  ]).then(([geo, flat])=>{
+    years = Array.from(new Set(flat.map(d=>d.Year))).sort((a,b)=>a-b);
+    year  = years[0];
+    dataByYear = {};
+    years.forEach(y=> dataByYear[y] = flat.filter(d=>d.Year===y));
+
+    const recMap = new Map(flat.map(d=>[`${d.ISO}_${d.Year}`,d]));
+    const allISOs = Array.from(new Set(flat.map(d=>d.ISO))).sort();
+
+    // checklist
+    const list = d3.select("#country-list");
+    allISOs.forEach(iso=>{
+      list.append("label")
+          .html(`<input type="checkbox" value="${iso}" checked> ${iso}`);
+    });
+
+    // draw map
+    const countries = gMap.selectAll("path.country")
+      .data(geo.features)
+      .join("path")
+        .attr("class","country")
+        .attr("d",path)
+        .attr("stroke","#999")
+        .attr("fill","#ffd6d6")
+        .on("mousemove",(ev,d)=>{
+          const r = recMap.get(`${d.id}_${year}`)||{};
+          const t = r.Total;
+          tooltip.style("opacity",.9)
+                 .style("left",ev.pageX+8+"px")
+                 .style("top",ev.pageY+8+"px")
+                 .html(`
+<strong>${d.properties.name} (${year})</strong><br>
+Gold: ${r.Gold||0}, Silver: ${r.Silver||0}, Bronze: ${r.Bronze||0}<br>
+<strong>Total:</strong> ${
+   t!=null ? t : `<span style="color:#c1121f">n/a</span>`
+ }
+`);
+        })
+        .on("mouseout",()=>tooltip.style("opacity",0));
+
+    const color = d3.scaleSequential(d3.interpolateGreys);
+
+    function update(){
+      d3.select("#year-label").text(year);
+      const checked = new Set(
+        Array.from(document.querySelectorAll("#country-list input:checked"))
+             .map(cb=>cb.value)
+      );
+
+      // recolor map
+      const vals = geo.features.map(f=>{
+        const r=recMap.get(`${f.id}_${year}`);
+        return r ? r[metric] : NaN;
+      });
+      color.domain([0, d3.max(vals.filter(v=>!isNaN(v)))||1]);
+
+      countries.transition().duration(300)
+        .attr("display",d=> checked.has(d.id)?"inline":"none")
+        .attr("fill",d=>{
+          const r=recMap.get(`${d.id}_${year}`)||{};
+          const v=r[metric];
+          if(v==null||isNaN(v)) return "#ffd6d6";
+          return color(v);
+        });
+
+      // bar data, top 10
+      const raw = dataByYear[year]
+        .filter(d=>checked.has(d.ISO))
+        .sort((a,b)=>b[metric]-a[metric]);
+      const barData = raw.slice(0,10);
+
+      // pad to 10 slots
+      const isos = barData.map(d=>d.ISO);
+      const padCount = 10 - barData.length;
+      const padIsos  = d3.range(padCount).map(i=>"__pad"+i);
+      const domainIsos = isos.concat(padIsos);
+
+      xBar.domain([0, d3.max(barData,d=>d[metric]||0)||1]);
+      yBar.domain(domainIsos);
+
+      // gridlines
+      gBar.selectAll(".grid").remove();
+      gBar.append("g")
+        .attr("class","grid")
+        .call(d3.axisBottom(xBar).ticks(5).tickSize(-innerH).tickFormat(""))
+        .selectAll("line").attr("stroke","#ddd");
+      gBar.select(".grid path").remove();
+
+      // bars (exit, enter, merge pattern)
+      const sel = gBar.selectAll("rect.bar")
+                      .data(barData, d=>d.ISO);
+      
+      // EXIT: shrink & remove
+      sel.exit()
+         .transition().duration(300)
+           .attr("width", 0)
+         .remove();
+      
+      // ENTER: create new bars at width=0
+      const enter = sel.enter()
+                       .append("rect")
+                         .attr("class", "bar")
+                         .attr("x", 0)
+                         .attr("y", d=>yBar(d.ISO))
+                         .attr("height", yBar.bandwidth())
+                         .attr("width", 0)
+                         .on("mousemove", (ev,d)=>{ 
+                           const valText = metric === "Total" ? d[metric] : fmtSci(d[metric]);
+                           tooltip.style("opacity",.9)
+                                  .style("left",ev.pageX+8+"px")
+                                  .style("top",ev.pageY+8+"px")
+                                  .html(`<strong>${d.ISO}</strong><br>${valText}`);
+                         })
+                         .on("mouseout", ()=>tooltip.style("opacity",0));
+      
+      // MERGE + UPDATE: reposition & resize all bars
+      enter.merge(sel)
+           .transition().duration(500)
+             .attr("y", d=>yBar(d.ISO))
+             .attr("width", d=>xBar(d[metric]||0));
+
+      // axes
+// replace your existing xAxisG call with:
+xAxisG.transition().duration(500)
+  .call(
+    d3.axisBottom(xBar)
+      .ticks(5)
+      .tickFormat(metric === "Total"
+        ? null                   // default formatting for raw medal counts
+        : fmtSci                 // scientific notation for per‑capita / per‑GDP
+      )
+  );
+
+      yAxisG.transition().duration(500)
+        .call(d3.axisLeft(yBar)
+               .tickFormat(d=> d.startsWith("__pad") ? "" : d));
+    }
+
+    // controls wiring
+    d3.select("#metric-select").on("change",function(){
+      metric=this.value; update();
+    });
+    d3.select("#select-all").on("click",()=>{
+      list.selectAll("input").property("checked",true); update();
+    });
+    d3.select("#clear-all").on("click",()=>{
+      list.selectAll("input").property("checked",false); update();
+    });
+    list.on("change", update);
+
+    // year slider
+    const slider = d3.select("#year-slider")
+      .attr("min", years[0])
+      .attr("max", years[years.length-1])
+      .attr("step", 4)
+      .on("input",function(){
+        year=+this.value; update();
+      });
+    slider.node().value = year;
+
+    d3.select("#step-back").on("click",()=>{ year-=4; if(year<years[0]) year=years[years.length-1]; slider.node().value=year; update(); });
+    d3.select("#step-forward").on("click",()=>{ year+=4; if(year>years[years.length-1]) year=years[0]; slider.node().value=year; update(); });
+
+    d3.select("#speed-select").on("change",function(){
+      intervalDuration=+this.value;
+      if(playing){ clearInterval(playInterval); playInterval=setInterval(playStep,intervalDuration); }
+    });
+    function playStep(){ year+=4; if(year>years[years.length-1]) year=years[0]; slider.node().value=year; update(); }
+    d3.select("#play-btn").on("click",()=>{
+      playing=!playing;
+      d3.select("#play-btn").text(playing?"⏸️ Pause":"▶️ Play");
+      if(playing){ playInterval=setInterval(playStep,intervalDuration); }
+      else        { clearInterval(playInterval); }
+    });
+
+    d3.select("#fs-btn").on("click",()=>{
+      const c=document.getElementById("map-container");
+      if(!c.classList.contains("fullscreen")){
+        c.requestFullscreen?.(); c.classList.add("fullscreen");
+        d3.select("#fs-btn").text("❎ Exit");
+      } else {
+        document.exitFullscreen?.(); c.classList.remove("fullscreen");
+        d3.select("#fs-btn").text("⛶");
+      }
+    });
+
+    // pan & zoom
+    svgMap.call(
+      d3.zoom().scaleExtent([1,20])
+        .on("zoom",({transform})=>gMap.attr("transform",transform))
+    );
+
+    update();
+  })
+  .catch(err=>console.error(err));
+  </script>
+</body>
+</html>

@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Premier League Small Multiples – Trends & Sorting</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/modern-normalize@2/modern-normalize.css">
+  <style>
+    /* ── Base ───────────────────────────────────────────── */
+    body {
+      margin: 0;
+      font: 14px/1.4 system-ui;
+      background: #f5f7fa;
+      color: #222;
+    }
+    h1 {
+      font: 600 22px/1.3 system-ui;
+      margin: 1.1rem 0;
+      text-align: center;
+    }
+
+    /* ── Navbar (Q2 style) ─────────────────────────────────────────── */
+    nav {
+      background: #2c3e50;
+      padding: 0.75em;
+      text-align: center;
+    }
+    nav a {
+      color: #ecf0f1;
+      margin: 0 1em;
+      font-weight: 500;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    nav a:hover {
+      color: #2ca02c;
+    }
+
+    /* ── controls + legend ───────────────────────────────── */
+    #controls {
+      max-width: 960px;
+      margin: 0 auto .6rem;
+      text-align: center;
+    }
+    select {
+      margin: .35rem .25rem;
+      padding: .35rem .6rem;
+      font-size: 14px;
+    }
+    .legend-simple {
+      max-width: 960px;
+      margin: 0 auto 1rem;
+      padding: .75em 1em;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      font-size: 13px;
+    }
+    .legend-simple span {
+      display: inline-flex;
+      align-items: center;
+    }
+    .legend-simple span::before {
+      content: "";
+      display: inline-block;
+      width: 16px;
+      height: 8px;
+      margin-left: 6px;
+    }
+    .legend-simple span:nth-child(1)::before { background: #c1121f; }
+    .legend-simple span:nth-child(2)::before { background: #2ca02c; }
+
+    /* ── grid + panels ─────────────────────────────────── */
+    #grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      max-width: 1200px;
+      margin: 0 auto 1.5rem;
+      padding: 0 8px;
+    }
+    .panel {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 4px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      cursor: pointer;
+      transition: transform .15s;
+    }
+    .panel:hover { transform: scale(1.04); }
+
+    /* ── make axes overflow visible ─────────────────────── */
+    .panel svg {
+      display: block;
+      overflow: visible;
+    }
+    .club {
+      font: 600 11px/1 system-ui;
+      text-anchor: middle;
+    }
+    .dot {
+      fill: #1f77b4;
+      stroke: #fff;
+      stroke-width: 1;
+    }
+
+    /* ── axes ──────────────────────────────────────────── */
+    .axis path, .axis line {
+      stroke: #777;
+      stroke-width: .8;
+      shape-rendering: crispEdges;
+    }
+    .axis text {
+      font-size: 9px;
+      fill: #555;
+    }
+
+    /* ── overlay + tooltip ─────────────────────────────── */
+    #overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,.65);
+      z-index: 5;
+    }
+    .tooltip {
+      position: absolute;
+      background: #fff;
+      border: 1px solid #999;
+      border-radius: 4px;
+      padding: 6px 8px;
+      font-size: 12px;
+      white-space: nowrap;
+      pointer-events: none;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      opacity: 0;
+      z-index: 6;
+    }
+
+    /* ── cameo section ─────────────────────────────────── */
+    details {
+      max-width: 1200px;
+      margin: 0 auto 1rem;
+      padding: 0 8px;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+      padding: .5rem;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+</head>
+
+<body>
+  <!-- ── NAVBAR ─────────────────────────────────────────── -->
+  <nav>
+    <a href="index.html">Q1 Trends</a> |
+    <a href="q2.html">Q2 Over/Under</a> |
+    <a href="q3.html">Q3 Olympic Efficiency</a>
+  </nav>
+
+  <h1>Premier‑League points per club (2015 – 2024)</h1>
+
+  <div id="controls">
+    Sort by 
+    <select id="metric">
+      <option value="slope" selected>Trend slope</option>
+      <option value="total">Total points</option>
+      <option value="avg">Average points</option>
+      <option value="alpha">Alphabetical</option>
+    </select>
+    Direction 
+    <select id="dir">
+      <option value="desc" selected>Descending</option>
+      <option value="asc">Ascending</option>
+    </select>
+  </div>
+
+  <div class="legend-simple">
+    <span>Decline</span>
+    <span>Improvement</span>
+  </div>
+
+  <div id="grid"></div>
+
+  <details>
+    <summary>Cameo teams (only one season in 2015‑24)</summary>
+    <div id="cameos" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+  </details>
+
+  <div id="overlay"></div>
+  <div id="tooltip" class="tooltip"></div>
+
+  <script type="module">
+    import {
+      select, scaleLinear, line,
+      axisLeft, axisBottom,
+      extent, json, sum,
+      ascending, interpolateRgb
+    } from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
+
+    const W = 190, H = 110, M = {t:24,r:6,b:24,l:28};
+    const FW = 720, FH = 400, MAR = {t:50,r:60,b:60,l:70};
+
+    json("data/teams_points_2015-24.json").then(raw => {
+      const cameos = raw.filter(d => d.values.length === 1);
+      const clubs  = raw.filter(d => d.values.length >  1);
+
+      clubs.forEach(d => {
+        d.total = sum(d.values, v => v.points);
+        d.avg   = d.total / d.values.length;
+        const n   = d.values.length,
+              sx  = sum(d.values, v => v.year),
+              sy  = sum(d.values, v => v.points),
+              sxy = sum(d.values, v => v.year*v.points),
+              sx2 = sum(d.values, v => v.year*v.year);
+        d.slope     = (n*sxy - sx*sy)/(n*sx2 - sx*sx);
+        d.intercept = (sy - d.slope*sx)/n;
+      });
+
+      const slopeExt = extent(clubs, d=>d.slope);
+      const colour   = scaleLinear()
+        .domain([slopeExt[0],0,slopeExt[1]])
+        .range(["#c1121f","#9f9f9f","#2ca02c"])
+        .interpolate(interpolateRgb.gamma(2.2));
+
+      const all  = raw.flatMap(d=>d.values);
+      const xDom = extent(all, v=>v.year);
+      const yDom = [0, extent(all, v=>v.points)[1] + 5];
+
+      const xMini = scaleLinear().domain(xDom).range([0, W-M.l-M.r]);
+      const yMini = scaleLinear().domain(yDom).range([H-M.t-M.b, 0]);
+
+      const grid      = select("#grid"),
+            cameWrap  = select("#cameos"),
+            overlay   = select("#overlay"),
+            tip       = select("#tooltip"),
+            metricSel = select("#metric"),
+            dirSel    = select("#dir");
+
+      function miniAxes(g){
+        g.append("g").attr("class","axis")
+         .call(axisLeft(yMini).ticks(3))
+         .call(a=>a.select("path").remove());
+        g.append("g").attr("class","axis")
+         .attr("transform",`translate(0,${H-M.t-M.b})`)
+         .call(axisBottom(xMini).ticks(3).tickFormat(v=>"’"+String(v).slice(-2)))
+         .call(a=>a.select("path").remove());
+      }
+
+      const miniLine = line()
+        .x(v=>xMini(v.year))
+        .y(v=>yMini(v.points));
+
+      function drawMini(node, d){
+        const g = select(node).append("svg")
+                   .attr("width", W)
+                   .attr("height", H)
+                 .append("g")
+                   .attr("transform",`translate(${M.l},${M.t})`);
+        miniAxes(g);
+        g.append("path").datum(d.values)
+         .attr("fill","none")
+         .attr("stroke", colour(d.slope))
+         .attr("stroke-width",1.6)
+         .attr("d", miniLine);
+        g.selectAll("circle.dot").data(d.values).enter().append("circle")
+         .attr("class","dot")
+         .attr("r",2.6)
+         .attr("cx",v=>xMini(v.year))
+         .attr("cy",v=>yMini(v.points));
+        g.append("text").attr("class","club")
+         .attr("x",(W-M.l-M.r)/2)
+         .attr("y",-10)
+         .text(d.team);
+      }
+
+      cameWrap.selectAll("div.panel").data(cameos).enter()
+        .append("div").attr("class","panel").style("width",`${W}px`)
+        .each((_,i,n)=>drawMini(n[i],cameos[i]));
+
+      function render(){
+        const metric = metricSel.node().value,
+              dir    = dirSel.node().value;
+        const cmp = metric==="alpha"
+                  ? (a,b)=>ascending(a.team,b.team)
+                  : (a,b)=>ascending(a[metric],b[metric]);
+        clubs.sort(dir==="asc" ? cmp : (a,b)=>-cmp(a,b));
+        grid.selectAll("div.panel").remove();
+        grid.selectAll("div.panel").data(clubs, d=>d.team).enter()
+          .append("div").attr("class","panel").style("width",`${W}px`)
+          .each((_,i,n)=>drawMini(n[i],clubs[i]))
+          .on("click",(_,d)=>openFull(d));
+      }
+
+      metricSel.on("change",render);
+      dirSel.on("change",render);
+      render();
+
+      function openFull(d){
+        select("#grid").style("opacity",.15);
+        overlay.style("display","flex").html("");
+        const svg = overlay.append("svg")
+           .attr("width",FW+MAR.l+MAR.r)
+           .attr("height",FH+MAR.t+MAR.b)
+           .style("cursor","zoom-out")
+           .on("click",close)
+         .append("g")
+           .attr("transform",`translate(${MAR.l},${MAR.t})`);
+        svg.append("rect")
+           .attr("x",-MAR.l).attr("y",-MAR.t)
+           .attr("width",FW+MAR.l+MAR.r)
+           .attr("height",FH+MAR.t+MAR.b)
+           .attr("fill","#fff");
+        const x = scaleLinear().domain(xDom).range([0,FW]);
+        const y = scaleLinear().domain(yDom).range([FH,0]);
+        const fullLine = line().x(v=>x(v.year)).y(v=>y(v.points));
+        svg.append("path").datum(d.values)
+           .attr("fill","none")
+           .attr("stroke",colour(d.slope))
+           .attr("stroke-width",2.8)
+           .attr("d", fullLine);
+        svg.append("line")
+           .attr("x1",x(xDom[0]))
+           .attr("y1",y(d.intercept + d.slope*xDom[0]))
+           .attr("x2",x(xDom[1]))
+           .attr("y2",y(d.intercept + d.slope*xDom[1]))
+           .attr("stroke","#ff7f0e")
+           .attr("stroke-width",2)
+           .attr("stroke-dasharray","4,4");
+        svg.selectAll("circle.big").data(d.values).enter().append("circle")
+           .attr("class","dot")
+           .attr("r",6)
+           .attr("cx",v=>x(v.year))
+           .attr("cy",v=>y(v.points))
+           .on("mousemove",(ev,v)=>{
+             tip.html(`<b>${d.team}</b><br>${v.year}: ${v.points} pts<br>
+                       Pos ${v.position}, GD ${v.gd}`)
+                .style("left",ev.pageX+15+"px")
+                .style("top", ev.pageY+"px")
+                .style("opacity",.97);
+           })
+           .on("mouseout",()=>tip.style("opacity",0));
+
+        svg.append("g").attr("class","axis")
+           .attr("transform",`translate(0,${FH})`)
+           .call(axisBottom(x).ticks(10).tickFormat(v=>"’"+String(v).slice(-2)));
+        svg.append("g").attr("class","axis")
+           .call(axisLeft(y));
+
+        svg.append("text")
+           .attr("x",FW/2).attr("y",-22)
+           .attr("text-anchor","middle")
+           .attr("font-size","18px")
+           .attr("font-weight",700)
+           .text(`${d.team} • slope ${d.slope.toFixed(2)} pts/season`);
+
+        function close(){
+          overlay.style("display","none").html("");
+          select("#grid").style("opacity",1);
+        }
+      }
+    });
+  </script>
+</body>
+</html>

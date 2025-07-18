@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Q2 Over/Under‑Performance (xPTS)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/modern-normalize@2/modern-normalize.css">
+  <style>
+    :root {
+      --bg: #f5f7fa;
+      --fg: #333;
+      --card-bg: #ffffff;
+      --border: #ddd;
+      --accent: #2ca02c;
+      --warn: #c1121f;
+      --mid: #999999;
+      --font: "Segoe UI", system-ui, sans-serif;
+      --radius: 6px;
+      --shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font);
+      font-size: 16px;
+      line-height: 1.5;
+    }
+    /* ── Navbar ─────────────────────────────────────────── */
+    nav {
+      background: #2c3e50;
+      padding: 0.75em;
+      text-align: center;
+    }
+    nav a {
+      color: #ecf0f1;
+      margin: 0 .75em;
+      font-weight: 500;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    nav a:hover {
+      color: var(--accent);
+    }
+    h1,h2 {
+      margin: 1.5em 0 0.5em;
+      font-weight: 600;
+      text-align: center;
+    }
+    .legend-simple {
+      max-width: 900px;
+      margin: 0.5em auto 1.5em;
+      padding: 0.75em 1em;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1em;
+      font-size: 0.9rem;
+    }
+    .legend-simple span b { margin-right: 0.25em; }
+    .chart-area {
+      display: flex;
+      gap: 1.5em;
+      max-width: 960px;
+      margin: 0 auto 2em;
+      align-items: flex-start;
+    }
+    .chart-container {
+      flex: 1;
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 0.5em;
+    }
+    #controls, .controls-placeholder {
+      width: 260px;
+    }
+    #controls {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1em;
+    }
+    .button-row {
+      display: flex;
+      gap: 0.5em;
+      margin-bottom: 0.75em;
+    }
+    button {
+      flex: 1;
+      padding: 0.5em;
+      background: #ecf0f1;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #ddd;
+    }
+    #team-list {
+      max-height: 220px;
+      overflow-y: auto;
+      padding-right: 0.5em;
+    }
+    #team-list label {
+      display: block;
+      margin: 0.3em 0;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .tooltip {
+      position: absolute;
+      pointer-events: none;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 8px 12px;
+      font-size: 0.85rem;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transition: opacity 0.1s;
+      white-space: nowrap;
+    }
+    .axis line {
+      stroke: #ccc;
+      stroke-dasharray: 2 2;
+    }
+    .axis path {
+      stroke: #888;
+      stroke-width: 1.2;
+    }
+    .axis text {
+      font-size: 0.85rem;
+      fill: #555;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+</head>
+<body>
+  <nav>
+    <a href="index.html">Q1 Trends</a> | 
+    <a href="q2.html">Q2 Over/Under</a> | 
+    <a href="q3.html">Q3 Olympic Efficiency</a>
+  </nav>
+
+  <h1>Q2 Points vs Expected Points Benchmark (xPTS)</h1>
+  <div class="legend-simple">
+    <span><b>X:</b> xPTS (expected‑points benchmark)</span>
+    <span><b>Y:</b> actual points</span>
+    <span><b>Color:</b> red=under‑perform, grey=average, green=over‑perform</span>
+  </div>
+
+  <div class="chart-area">
+    <div id="q2-container" class="chart-container"></div>
+    <div id="controls">
+      <div class="button-row">
+        <button id="select-all">Select All</button>
+        <button id="deselect-all">Deselect All</button>
+      </div>
+      <div id="team-list"></div>
+    </div>
+  </div>
+  <div id="scatter-tooltip" class="tooltip"></div>
+
+  <h2>Club Consistency vs. Average xPTS Residuals</h2>
+  <div class="legend-simple">
+    <span><b>X:</b> avg residual (left=under, right=over)</span>
+    <span><b>Y:</b> consistency (low=steady, high=erratic)</span>
+    <span><b>Size:</b> total seasons played (bigger=more)</span>
+  </div>
+
+  <div class="chart-area">
+    <div id="consistency-scatter" class="chart-container"></div>
+    <div class="controls-placeholder"></div>
+  </div>
+  <div id="consistency-tooltip" class="tooltip"></div>
+
+  <script type="module">
+    import {
+      select, json,
+      extent, sum,
+      scaleLinear, scaleSqrt, interpolateRgb,
+      axisBottom, axisLeft
+    } from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
+
+    let allTeams = [], selectedTeams = [];
+
+    async function initControls() {
+      const summary = await json("data/epl_xpts_expected_summary.json");
+      allTeams = summary.map(d => d.team).sort();
+      const list = select("#team-list");
+      allTeams.forEach(team => {
+        const id = "chk-" + team.replace(/\s+/g, "_");
+        list.append("label")
+          .html(`<input type="checkbox" id="${id}" value="${team}" checked> ${team}`)
+          .on("change", updateSelection);
+      });
+      selectedTeams = [...allTeams];
+      select("#select-all").on("click", () => {
+        list.selectAll("input").property("checked", true);
+        selectedTeams = [...allTeams];
+        drawScatter();
+      });
+      select("#deselect-all").on("click", () => {
+        list.selectAll("input").property("checked", false);
+        selectedTeams = [];
+        drawScatter();
+      });
+    }
+
+    function updateSelection() {
+      selectedTeams =
+        Array.from(document.querySelectorAll("#team-list input:checked"))
+             .map(cb => cb.value);
+      drawScatter();
+    }
+
+    let scatterSvg, xS, yS, colorS;
+    async function setupScatter() {
+      const data = await json("data/epl_xpts_points_raw.json");
+      const uniq = Array.from(new Map(
+        data.map(d => [d.team + "|" + d.season_end_year, d])
+      ).values());
+
+      const W=800, H=450, M={top:40,right:20,bottom:50,left:60};
+      scatterSvg = select("#q2-container")
+        .append("svg")
+          .attr("width",W+M.left+M.right)
+          .attr("height",H+M.top+M.bottom)
+        .append("g")
+          .attr("transform",`translate(${M.left},${M.top})`);
+
+      xS = scaleLinear()
+        .domain(extent(uniq, d => d.xPTS)).nice()
+        .range([0,W]);
+      yS = scaleLinear()
+        .domain(extent(uniq, d => d.points)).nice()
+        .range([H,0]);
+
+      const rmax = Math.max(...uniq.map(d => Math.abs(d.residual)));
+      colorS = scaleLinear()
+        .domain([-rmax,0,rmax])
+        .range(["#c1121f","#999","#2ca02c"])
+        .interpolate(interpolateRgb.gamma(2.2));
+
+      scatterSvg.append("g")
+        .attr("class","axis")
+        .attr("transform",`translate(0,${H})`)
+        .call(axisBottom(xS).ticks(10));
+      scatterSvg.append("g")
+        .attr("class","axis")
+        .call(axisLeft(yS));
+
+      const n   = uniq.length,
+            sx  = sum(uniq, d => d.xPTS),
+            sy  = sum(uniq, d => d.points),
+            sxy = sum(uniq, d => d.xPTS * d.points),
+            sx2 = sum(uniq, d => d.xPTS * d.xPTS);
+      const m   = (n * sxy - sx * sy) / (n * sx2 - sx * sx),
+            b   = (sy - m * sx) / n;
+      const [xmin,xmax] = xS.domain();
+      scatterSvg.append("line")
+        .attr("x1", xS(xmin)).attr("y1", yS(m*xmin + b))
+        .attr("x2", xS(xmax)).attr("y2", yS(m*xmax + b))
+        .attr("stroke","#f60")
+        .attr("stroke-dasharray","6,4");
+
+      drawScatter();
+    }
+
+    function drawScatter() {
+      json("data/epl_xpts_points_raw.json").then(data => {
+        const uniq = Array.from(new Map(
+          data.map(d => [d.team + "|" + d.season_end_year, d])
+        ).values());
+        const filtered = uniq.filter(d => selectedTeams.includes(d.team));
+        const tip = select("#scatter-tooltip");
+
+        const circles = scatterSvg.selectAll("circle.data")
+          .data(filtered, d => d.team + "|" + d.season_end_year);
+
+        circles.join(
+          enter => enter.append("circle").classed("data",true)
+            .attr("cx", d => xS(d.xPTS))
+            .attr("cy", d => yS(d.points))
+            .attr("r", 4)
+            .attr("fill", d => colorS(d.residual))
+            .attr("stroke","#fff").attr("stroke-width",0.5)
+            .attr("opacity", 0)
+            .on("mousemove", (e,d) => {
+              tip.style("opacity",0.9)
+                 .style("left", e.pageX+12+"px")
+                 .style("top",  e.pageY+12+"px")
+                 .html(`<b>${d.team} ${d.season_end_year}</b><br>
+                        xPTS: ${d.xPTS.toFixed(1)}, Pts: ${d.points}<br>
+                        Res: ${d.residual.toFixed(1)}`);
+            })
+            .on("mouseout", () => tip.style("opacity",0))
+            .transition().attr("opacity",0.8),
+          update => update.transition().attr("opacity",0.8),
+          exit   => exit.transition().attr("opacity",0).remove()
+        );
+      });
+    }
+
+    async function drawConsistency() {
+      const data = await json("data/epl_xpts_expected_summary.json");
+      const W=700, H=500, M={top:50,right:30,bottom:50,left:60};
+      const svg = select("#consistency-scatter")
+        .append("svg")
+          .attr("width", W+M.left+M.right)
+          .attr("height", H+M.top+M.bottom)
+        .append("g")
+          .attr("transform", `translate(${M.left},${M.top})`);
+
+      const [minR,maxR] = extent(data, d => d.mean_residual);
+      const x = scaleLinear().domain([minR,maxR]).nice().range([0,W]);
+      const y = scaleLinear().domain(extent(data,d=>d.std_residual)).nice().range([H,0]);
+      const r = scaleSqrt().domain(extent(data,d=>d.seasons_played)).range([4,20]);
+      const color = scaleLinear()
+        .domain([minR,0,maxR])
+        .range(["#c1121f","#999","#2ca02c"])
+        .interpolate(interpolateRgb.gamma(2.2));
+
+      svg.append("g").attr("class","axis")
+        .attr("transform",`translate(0,${H})`)
+        .call(axisBottom(x).ticks(8));
+      svg.append("g").attr("class","axis")
+        .call(axisLeft(y));
+
+      [0,3,-3].forEach(v=>{
+        svg.append("line")
+          .attr("x1",x(v)).attr("x2",x(v))
+          .attr("y1",0).attr("y2",H)
+          .attr("stroke", v===0?"#222":"#666")
+          .attr("stroke-dasharray", v===0?"2,2":"4,4");
+      });
+
+      const tip = select("#consistency-tooltip");
+      svg.selectAll("circle")
+         .data(data, d => d.team)
+         .join("circle")
+           .attr("cx", d => x(d.mean_residual))
+           .attr("cy", d => y(d.std_residual))
+           .attr("r",  d => r(d.seasons_played))
+           .attr("fill",d => color(d.mean_residual))
+           .attr("stroke","#fff").attr("stroke-width",1)
+           .attr("opacity",0.85)
+           .on("mousemove",(e,d)=>{
+             tip.style("opacity",0.9)
+                .style("left", e.pageX+12+"px")
+                .style("top",  e.pageY+12+"px")
+                .html(`<b>${d.team}</b><br>
+                       Mean Res: ${d.mean_residual.toFixed(1)}<br>
+                       Std Res: ${d.std_residual.toFixed(1)}<br>
+                       Seasons: ${d.seasons_played}`);
+           })
+           .on("mouseout",()=>tip.style("opacity",0));
+
+      svg.selectAll("circle")
+         .sort((a,b)=>r(b.seasons_played)-r(a.seasons_played));
+    }
+
+    initControls()
+      .then(setupScatter)
+      .then(drawConsistency);
+  </script>
+</body>
+</html>

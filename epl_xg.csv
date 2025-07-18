@@ -1,0 +1,201 @@
+season_end_year,team,xG
+2015,Arsenal,73.53
+2015,Aston Villa,26.53
+2015,Bournemouth,38.71
+2015,Chelsea,54.48
+2015,Crystal Palace,42.51
+2015,Everton,53.98
+2015,Leicester,68.42
+2015,Liverpool,54.37
+2015,Manchester City,66.2
+2015,Manchester United,45.42
+2015,Newcastle United,37.61
+2015,Norwich,39.19
+2015,Southampton,56.2
+2015,Stoke,42.63
+2015,Sunderland,40.52
+2015,Swansea,39.96
+2015,Tottenham,63.42
+2015,Watford,43.2
+2015,West Bromwich Albion,39.75
+2015,West Ham,54.4
+2016,Arsenal,63.58
+2016,Bournemouth,50.02
+2016,Burnley,35.59
+2016,Chelsea,61.8
+2016,Crystal Palace,45.4
+2016,Everton,49.63
+2016,Hull,33.84
+2016,Leicester,44.34
+2016,Liverpool,66.63
+2016,Manchester City,79.85
+2016,Manchester United,57.57
+2016,Middlesbrough,30.93
+2016,Southampton,49.98
+2016,Stoke,47.87
+2016,Sunderland,34.22
+2016,Swansea,39.5
+2016,Tottenham,70.07
+2016,Watford,36.25
+2016,West Bromwich Albion,38.21
+2016,West Ham,48.25
+2017,Arsenal,72.27
+2017,Bournemouth,39.99
+2017,Brighton,37.21
+2017,Burnley,32.77
+2017,Chelsea,59.16
+2017,Crystal Palace,56.75
+2017,Everton,43.71
+2017,Huddersfield,32.13
+2017,Leicester,50.29
+2017,Liverpool,77.49
+2017,Manchester City,91.43
+2017,Manchester United,59.04
+2017,Newcastle United,44.63
+2017,Southampton,41.88
+2017,Stoke,36.75
+2017,Swansea,29.71
+2017,Tottenham,68.91
+2017,Watford,45.85
+2017,West Bromwich Albion,35.18
+2017,West Ham,36.8
+2018,Arsenal,64.8
+2018,Bournemouth,58.81
+2018,Brighton,37.03
+2018,Burnley,44.74
+2018,Cardiff,41.77
+2018,Chelsea,63.97
+2018,Crystal Palace,50.64
+2018,Everton,53.87
+2018,Fulham,42.62
+2018,Huddersfield,29.0
+2018,Leicester,52.11
+2018,Liverpool,79.46
+2018,Manchester City,93.72
+2018,Manchester United,68.62
+2018,Newcastle United,39.91
+2018,Southampton,49.67
+2018,Tottenham,61.75
+2018,Watford,51.73
+2018,West Ham,47.96
+2018,Wolverhampton Wanderers,53.06
+2019,Arsenal,50.82
+2019,Aston Villa,45.09
+2019,Bournemouth,44.67
+2019,Brighton,47.42
+2019,Burnley,49.35
+2019,Chelsea,76.23
+2019,Crystal Palace,34.45
+2019,Everton,53.71
+2019,Leicester,61.02
+2019,Liverpool,75.19
+2019,Manchester City,102.21
+2019,Manchester United,66.19
+2019,Newcastle United,36.49
+2019,Norwich,37.23
+2019,Sheffield United,45.81
+2019,Southampton,56.5
+2019,Tottenham,49.02
+2019,Watford,48.56
+2019,West Ham,49.07
+2019,Wolverhampton Wanderers,54.22
+2020,Arsenal,52.25
+2020,Aston Villa,56.72
+2020,Brighton,53.82
+2020,Burnley,38.13
+2020,Chelsea,68.66
+2020,Crystal Palace,35.29
+2020,Everton,49.24
+2020,Fulham,41.06
+2020,Leeds,59.26
+2020,Leicester,58.8
+2020,Liverpool,72.21
+2020,Manchester City,77.72
+2020,Manchester United,63.17
+2020,Newcastle United,43.96
+2020,Sheffield United,33.16
+2020,Southampton,45.28
+2020,Tottenham,56.68
+2020,West Bromwich Albion,34.97
+2020,West Ham,60.34
+2020,Wolverhampton Wanderers,38.62
+2021,Arsenal,63.39
+2021,Aston Villa,43.13
+2021,Brentford,52.89
+2021,Brighton,49.57
+2021,Burnley,41.11
+2021,Chelsea,69.3
+2021,Crystal Palace,48.84
+2021,Everton,44.47
+2021,Leeds,51.19
+2021,Leicester,49.49
+2021,Liverpool,93.02
+2021,Manchester City,93.4
+2021,Manchester United,57.21
+2021,Newcastle United,41.53
+2021,Norwich,31.51
+2021,Southampton,47.35
+2021,Tottenham,67.95
+2021,Watford,39.34
+2021,West Ham,54.98
+2021,Wolverhampton Wanderers,39.04
+2022,Arsenal,76.51
+2022,Aston Villa,50.0
+2022,Bournemouth,40.08
+2022,Brentford,59.23
+2022,Brighton,77.72
+2022,Chelsea,51.89
+2022,Crystal Palace,40.72
+2022,Everton,48.65
+2022,Fulham,47.98
+2022,Leeds,47.8
+2022,Leicester,48.99
+2022,Liverpool,80.77
+2022,Manchester City,84.32
+2022,Manchester United,71.9
+2022,Newcastle United,76.98
+2022,Nottingham Forest,39.57
+2022,Southampton,39.27
+2022,Tottenham,57.83
+2022,West Ham,51.21
+2022,Wolverhampton Wanderers,35.13
+2023,Arsenal,84.39
+2023,Aston Villa,67.42
+2023,Bournemouth,63.76
+2023,Brentford,64.29
+2023,Brighton,61.91
+2023,Burnley,43.44
+2023,Chelsea,80.88
+2023,Crystal Palace,53.94
+2023,Everton,60.75
+2023,Fulham,52.81
+2023,Liverpool,94.79
+2023,Luton,49.87
+2023,Manchester City,89.55
+2023,Manchester United,60.33
+2023,Newcastle United,84.48
+2023,Nottingham Forest,52.16
+2023,Sheffield United,41.31
+2023,Tottenham,73.35
+2023,West Ham,54.53
+2023,Wolverhampton Wanderers,50.65
+2024,Arsenal,63.84
+2024,Aston Villa,60.09
+2024,Bournemouth,65.88
+2024,Brentford,56.29
+2024,Brighton,56.59
+2024,Chelsea,65.58
+2024,Crystal Palace,55.85
+2024,Everton,40.07
+2024,Fulham,50.26
+2024,Ipswich,36.17
+2024,Leicester,33.23
+2024,Liverpool,81.56
+2024,Manchester City,65.26
+2024,Manchester United,48.25
+2024,Newcastle United,60.65
+2024,Nottingham Forest,45.39
+2024,Southampton,35.36
+2024,Tottenham,58.42
+2024,West Ham,44.22
+2024,Wolverhampton Wanderers,38.9
